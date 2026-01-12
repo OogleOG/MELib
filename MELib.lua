@@ -1,26 +1,11 @@
---[[
-    MELib - Extended Utility Library for ME Scripts
-    Version: 1.1.0
-    
-    Clean wrapper/abstraction layer for the base API.
-    Pass your own IDs/names - no hardcoded values.
-    
-    Usage:
-        local API = require("api")
-        local MELib = require("MELib")
-        
-        MELib.Bank.Withdraw("Iron scimitar", 1)
-        MELib.Combat.Eat(379)
-        MELib.NPC.Attack({28619, 28620})
-]]--
+
 
 local ScriptName = "MELib"
 local Author = "Oogle"
 
 local API = require("api")
 local MELib = {}
-
-MELib.VERSION = "1.1.0"
+MELib.VERSION = "2.0.0"
 
 MELib.Utils = {}
 
@@ -112,7 +97,7 @@ function MELib.Player.GetAdrenaline()
 end
 
 function MELib.Player.GetSummoning()
-    return API.GetSummoningPoints_()
+    return Familiars:GetSummoningPoints()
 end
 
 function MELib.Player.GetRunEnergy()
@@ -203,195 +188,207 @@ end
 MELib.Inventory = {}
 
 function MELib.Inventory.GetAll()
-    return API.ReadInvArrays33()
+    return Inventory:GetItems()
 end
 
 function MELib.Inventory.Contains(item)
-    if type(item) == "table" then
-        return API.InvItemFound2(item)
-    end
-    return API.InvItemFound1(item)
+    return Inventory:Contains(item)
+end
+
+function MELib.Inventory.ContainsAll(items)
+    return Inventory:ContainsAll(items)
+end
+
+function MELib.Inventory.ContainsAny(items)
+    return Inventory:ContainsAny(items)
 end
 
 function MELib.Inventory.Count(item)
-    if type(item) == "table" then
-        return API.InvItemcount_2(item)
-    end
-    return API.InvItemcount_1(item)
-end
-
-function MELib.Inventory.StackSize(item)
-    if type(item) == "table" then
-        return API.InvStackSize(item)
-    end
-    return API.InvStackSize({item})
+    return Inventory:GetItemAmount(item)
 end
 
 function MELib.Inventory.IsFull()
-    return API.InvFull_()
+    return Inventory:IsFull()
 end
 
 function MELib.Inventory.IsEmpty()
-    return API.Invfreecount_() == 28
+    return Inventory:IsEmpty()
 end
 
 function MELib.Inventory.FreeSlots()
-    return API.Invfreecount_()
+    return Inventory:FreeSpaces()
 end
 
 function MELib.Inventory.UsedSlots()
-    return 28 - API.Invfreecount_()
-end
-
-function MELib.Inventory.Click(item, action)
-    action = action or 0
-    if type(item) == "table" then
-        return API.DoAction_Inventory2(item, action, 1, API.OFF_ACT_GeneralInterface_route)
-    end
-    return API.DoAction_Inventory1(item, action, 1, API.OFF_ACT_GeneralInterface_route)
+    return 28 - Inventory:FreeSpaces()
 end
 
 function MELib.Inventory.Use(item)
-    if type(item) == "table" then
-        return API.DoAction_Inventory2(item, 0, 1, API.OFF_ACT_GeneralInterface_route1)
-    end
-    return API.DoAction_Inventory1(item, 0, 1, API.OFF_ACT_GeneralInterface_route1)
+    return Inventory:Use(item)
 end
 
 function MELib.Inventory.UseOn(item1, item2)
-    MELib.Inventory.Use(item1)
-    API.RandomSleep2(100, 50, 100)
-    return MELib.Inventory.Use(item2)
+    return Inventory:UseItemOnItem(item1, item2)
 end
 
 function MELib.Inventory.Drop(item)
-    if type(item) == "table" then
-        return API.DoAction_Inventory2(item, 0, 8, API.OFF_ACT_GeneralInterface_route)
-    end
-    return API.DoAction_Inventory1(item, 0, 8, API.OFF_ACT_GeneralInterface_route)
+    return Inventory:Drop(item)
 end
 
-function MELib.Inventory.DropAll(item)
-    local items = MELib.Inventory.GetAll()
-    for _, inv in ipairs(items) do
-        local shouldDrop = false
-        if type(item) == "table" then
-            for _, id in ipairs(item) do
-                if inv.itemid1 == id then shouldDrop = true break end
-            end
-        else
-            shouldDrop = inv.itemid1 == item
-        end
-        if shouldDrop then
-            API.DoAction_Inventory1(inv.itemid1, 0, 8, API.OFF_ACT_GeneralInterface_route)
-            API.RandomSleep2(100, 50, 150)
-        end
-    end
+function MELib.Inventory.Eat(item)
+    return Inventory:Eat(item)
 end
 
-function MELib.Inventory.DropAllExcept(keepItems)
-    local items = MELib.Inventory.GetAll()
-    for _, inv in ipairs(items) do
-        local shouldKeep = false
-        if type(keepItems) == "table" then
-            for _, id in ipairs(keepItems) do
-                if inv.itemid1 == id then shouldKeep = true break end
-            end
-        else
-            shouldKeep = inv.itemid1 == keepItems
-        end
-        if not shouldKeep and inv.itemid1 > 0 then
-            API.DoAction_Inventory1(inv.itemid1, 0, 8, API.OFF_ACT_GeneralInterface_route)
-            API.RandomSleep2(100, 50, 150)
-        end
-    end
+function MELib.Inventory.Equip(item)
+    return Inventory:Equip(item)
+end
+
+function MELib.Inventory.Rub(item)
+    return Inventory:Rub(item)
+end
+
+function MELib.Inventory.Note(item)
+    return Inventory:NoteItem(item)
 end
 
 function MELib.Inventory.GetItem(item)
-    local items = MELib.Inventory.GetAll()
-    if type(item) == "table" then
-        for _, inv in ipairs(items) do
-            for _, id in ipairs(item) do
-                if inv.itemid1 == id then return inv end
-            end
-        end
-    else
-        for _, inv in ipairs(items) do
-            if inv.itemid1 == item then return inv end
-        end
-    end
-    return nil
+    return Inventory:GetItem(item)
+end
+
+function MELib.Inventory.GetSlot(slot)
+    return Inventory:GetSlotData(slot)
+end
+
+function MELib.Inventory.IsItemSelected()
+    return Inventory:IsItemSelected()
+end
+
+function MELib.Inventory.DoAction(item, action, offset)
+    return Inventory:DoAction(item, action, offset)
 end
 
 MELib.Equipment = {}
 
-MELib.Equipment.HEAD = 0
-MELib.Equipment.CAPE = 1
-MELib.Equipment.NECK = 2
-MELib.Equipment.WEAPON = 3
-MELib.Equipment.BODY = 4
-MELib.Equipment.SHIELD = 5
-MELib.Equipment.LEGS = 7
-MELib.Equipment.HANDS = 9
-MELib.Equipment.FEET = 10
-MELib.Equipment.RING = 12
-MELib.Equipment.AMMO = 13
-MELib.Equipment.AURA = 14
-MELib.Equipment.POCKET = 15
+MELib.Equipment.SLOT = {
+    HEAD = 0,
+    CAPE = 1,
+    NECK = 2,
+    MAINHAND = 3,
+    BODY = 4,
+    OFFHAND = 5,
+    BOTTOM = 7,
+    GLOVES = 9,
+    BOOTS = 10,
+    RING = 12,
+    AMMO = 13,
+    AURA = 14,
+    POCKET = 15
+}
 
 function MELib.Equipment.GetAll()
-    return API.ReadEquipment()
+    return Equipment:GetItems()
 end
 
-function MELib.Equipment.IsWearing(slot, item)
-    return API.EquipSlotEq1(slot, item)
+function MELib.Equipment.Contains(item)
+    return Equipment:Contains(item)
 end
 
-function MELib.Equipment.HasEquipped(item)
-    if type(item) == "table" then
-        for _, id in ipairs(item) do
-            if API.CheckEquipSlot(id) then return true end
-        end
-        return false
-    end
-    return API.CheckEquipSlot(item)
+function MELib.Equipment.ContainsAll(items)
+    return Equipment:ContainsAll(items)
 end
 
-function MELib.Equipment.Equip(item)
-    if MELib.Inventory.Contains(item) then
-        return API.DoAction_Inventory1(item, 0, 2, API.OFF_ACT_GeneralInterface_route)
-    end
-    return false
+function MELib.Equipment.ContainsAny(items)
+    return Equipment:ContainsAny(items)
 end
 
-function MELib.Equipment.Unequip(slot)
-    return API.DoAction_Interface(0xffffffff, 0xffffffff, 1, 1464, slot, -1, API.OFF_ACT_GeneralInterface_route)
+function MELib.Equipment.Unequip(item)
+    return Equipment:Unequip(item)
+end
+
+function MELib.Equipment.GetSlot(slot)
+    return Equipment:GetSlotData(slot)
+end
+
+function MELib.Equipment.GetHelm()
+    return Equipment:GetHelm()
+end
+
+function MELib.Equipment.GetCape()
+    return Equipment:GetCape()
+end
+
+function MELib.Equipment.GetNeck()
+    return Equipment:GetNeck()
+end
+
+function MELib.Equipment.GetMainhand()
+    return Equipment:GetMainhand()
+end
+
+function MELib.Equipment.GetBody()
+    return Equipment:GetBody()
+end
+
+function MELib.Equipment.GetOffhand()
+    return Equipment:GetOffhand()
+end
+
+function MELib.Equipment.GetBottom()
+    return Equipment:GetBottom()
+end
+
+function MELib.Equipment.GetGloves()
+    return Equipment:GetGloves()
+end
+
+function MELib.Equipment.GetBoots()
+    return Equipment:GetBoots()
+end
+
+function MELib.Equipment.GetRing()
+    return Equipment:GetRing()
+end
+
+function MELib.Equipment.GetAmmo()
+    return Equipment:GetAmmo()
+end
+
+function MELib.Equipment.GetAura()
+    return Equipment:GetAura()
+end
+
+function MELib.Equipment.GetPocket()
+    return Equipment:GetPocket()
+end
+
+function MELib.Equipment.IsEmpty()
+    return Equipment:IsEmpty()
+end
+
+function MELib.Equipment.IsFull()
+    return Equipment:IsFull()
+end
+
+function MELib.Equipment.IsOpen()
+    return Equipment:IsOpen()
+end
+
+function MELib.Equipment.Open()
+    return Equipment:OpenInterface()
+end
+
+function MELib.Equipment.GetItemXp(slot)
+    return Equipment:GetItemXp(slot)
+end
+
+function MELib.Equipment.DoAction(item, action)
+    return Equipment:DoAction(item, action)
 end
 
 MELib.Bank = {}
 
 function MELib.Bank.IsOpen()
     return API.BankOpen2()
-end
-
-function MELib.Bank.Open(bankObject, distance)
-    distance = distance or 20
-    if type(bankObject) == "table" then
-        API.DoAction_Object2(0x5, 0, bankObject, distance, WPOINT.new(0,0,0))
-    else
-        API.DoAction_Object1(0x5, 0, {bankObject}, distance)
-    end
-    return MELib.Utils.WaitUntil(MELib.Bank.IsOpen, 5000)
-end
-
-function MELib.Bank.OpenNPC(bankerNPC, distance)
-    distance = distance or 20
-    if type(bankerNPC) == "table" then
-        API.DoAction_NPC(0x5, API.OFF_ACT_InteractNPC_route, bankerNPC, distance, true, 0)
-    else
-        API.DoAction_NPC(0x5, API.OFF_ACT_InteractNPC_route, {bankerNPC}, distance, true, 0)
-    end
-    return MELib.Utils.WaitUntil(MELib.Bank.IsOpen, 5000)
 end
 
 function MELib.Bank.Close()
@@ -402,7 +399,7 @@ function MELib.Bank.Close()
     return true
 end
 
-function MELib.Bank.GetStack(item)
+function MELib.Bank.GetItemStack(item)
     if type(item) == "string" then
         return API.BankGetItemStack_str(item)
     end
@@ -411,13 +408,7 @@ end
 
 function MELib.Bank.Contains(item, minStack)
     minStack = minStack or 1
-    if type(item) == "table" then
-        for _, id in ipairs(item) do
-            if MELib.Bank.GetStack(id) >= minStack then return true end
-        end
-        return false
-    end
-    return MELib.Bank.GetStack(item) >= minStack
+    return MELib.Bank.GetItemStack(item) >= minStack
 end
 
 function MELib.Bank.DepositAll()
@@ -425,53 +416,7 @@ function MELib.Bank.DepositAll()
     return API.DoAction_Interface(0xffffffff, 0xffffffff, 1, 517, 39, -1, API.OFF_ACT_GeneralInterface_route)
 end
 
-function MELib.Bank.DepositAllExcept(keepItems)
-    if not MELib.Bank.IsOpen() then return false end
-    local items = MELib.Inventory.GetAll()
-    for _, inv in ipairs(items) do
-        local shouldKeep = false
-        if type(keepItems) == "table" then
-            for _, id in ipairs(keepItems) do
-                if inv.itemid1 == id then shouldKeep = true break end
-            end
-        else
-            shouldKeep = inv.itemid1 == keepItems
-        end
-        if not shouldKeep and inv.itemid1 > 0 then
-            API.DoAction_Bank_Inv(inv.itemid1, 8, API.OFF_ACT_GeneralInterface_route2)
-            API.RandomSleep2(100, 50, 100)
-        end
-    end
-    return true
-end
-
-function MELib.Bank.Deposit(item, amount)
-    if not MELib.Bank.IsOpen() then return false end
-    amount = amount or 1
-    
-    local action = 2  -- Deposit 1
-    if amount == "All" or amount == "all" then
-        action = 8
-    elseif amount == 5 then
-        action = 4
-    elseif amount == 10 then
-        action = 5
-    elseif type(amount) == "number" and amount > 1 then
-        action = 7  -- Deposit X
-    end
-    
-    API.DoAction_Bank_Inv(item, action, API.OFF_ACT_GeneralInterface_route2)
-    
-    if action == 7 then
-        API.RandomSleep2(600, 100, 200)
-        API.TypeString(tostring(amount))
-        API.RandomSleep2(100, 50, 100)
-        API.KeyboardPress2(0x0D, 60, 100)
-    end
-    return true
-end
-
-function MELib.Bank.DepositWorn()
+function MELib.Bank.DepositWornItems()
     if not MELib.Bank.IsOpen() then return false end
     return API.DoAction_Interface(0xffffffff, 0xffffffff, 1, 517, 42, -1, API.OFF_ACT_GeneralInterface_route)
 end
@@ -483,10 +428,8 @@ end
 
 function MELib.Bank.Withdraw(item, amount)
     if not MELib.Bank.IsOpen() then return false end
-    if not MELib.Bank.Contains(item) then return false end
     
-    amount = amount or 1
-    local action = 1  -- Withdraw 1
+    local action = 1
     if amount == "All" or amount == "all" then
         action = 8
     elseif amount == 5 then
@@ -494,10 +437,14 @@ function MELib.Bank.Withdraw(item, amount)
     elseif amount == 10 then
         action = 4
     elseif type(amount) == "number" and amount > 1 then
-        action = 6  -- Withdraw X
+        action = 6
     end
     
-    API.DoAction_Bank(item, action, API.OFF_ACT_GeneralInterface_route)
+    if type(item) == "string" then
+        API.DoAction_Bank_str(item, action, API.OFF_ACT_GeneralInterface_route)
+    else
+        API.DoAction_Bank(item, action, API.OFF_ACT_GeneralInterface_route)
+    end
     
     if action == 6 then
         API.RandomSleep2(600, 100, 200)
@@ -505,16 +452,34 @@ function MELib.Bank.Withdraw(item, amount)
         API.RandomSleep2(100, 50, 100)
         API.KeyboardPress2(0x0D, 60, 100)
     end
+    
     return true
 end
 
-function MELib.Bank.WithdrawNoted(item, amount)
-    API.DoAction_Interface(0xffffffff, 0xffffffff, 1, 517, 19, -1, API.OFF_ACT_GeneralInterface_route)
-    API.RandomSleep2(100, 50, 100)
-    local result = MELib.Bank.Withdraw(item, amount)
-    API.RandomSleep2(100, 50, 100)
-    API.DoAction_Interface(0xffffffff, 0xffffffff, 1, 517, 19, -1, API.OFF_ACT_GeneralInterface_route)
-    return result
+function MELib.Bank.Deposit(item, amount)
+    if not MELib.Bank.IsOpen() then return false end
+    
+    local action = 1
+    if amount == "All" or amount == "all" then
+        action = 8
+    elseif amount == 5 then
+        action = 3
+    elseif amount == 10 then
+        action = 4
+    elseif type(amount) == "number" and amount > 1 then
+        action = 6
+    end
+    
+    API.DoAction_Bank_Inv(item, action, API.OFF_ACT_GeneralInterface_route2)
+    
+    if action == 6 then
+        API.RandomSleep2(600, 100, 200)
+        API.TypeString(tostring(amount))
+        API.RandomSleep2(100, 50, 100)
+        API.KeyboardPress2(0x0D, 60, 100)
+    end
+    
+    return true
 end
 
 function MELib.Bank.LoadPreset(preset)
@@ -527,11 +492,8 @@ function MELib.Bank.LoadPreset(preset)
     return false
 end
 
-function MELib.Bank.Search(term)
-    if not MELib.Bank.IsOpen() then return end
-    API.DoAction_Interface(0xffffffff, 0xffffffff, 1, 517, 33, -1, API.OFF_ACT_GeneralInterface_route)
-    API.RandomSleep2(300, 100, 200)
-    API.TypeString(term)
+function MELib.Bank.EnterPin(pin)
+    return API.DoBankPin(pin)
 end
 
 MELib.Combat = {}
@@ -544,96 +506,68 @@ function MELib.Combat.HasTarget()
     return API.IsTargeting()
 end
 
-function MELib.Combat.GetTargetHP()
+function MELib.Combat.GetTargetHealth()
     return API.GetTargetHealth()
 end
 
 function MELib.Combat.Eat(food)
-    if MELib.Inventory.Contains(food) then
-        return MELib.Inventory.Click(food)
-    end
-    return false
+    return Inventory:Eat(food)
 end
 
 function MELib.Combat.Drink(potion)
-    if MELib.Inventory.Contains(potion) then
-        return MELib.Inventory.Click(potion)
+    return Inventory:Use(potion)
+end
+
+function MELib.Combat.UseAbility(name, exact)
+    local ability = API.GetABs_name(name, exact or true)
+    if ability and ability.id > 0 and ability.enabled and ability.cooldown_timer == 0 then
+        return API.DoAction_Ability_Direct(ability, 1, API.OFF_ACT_GeneralInterface_route)
     end
     return false
 end
 
-function MELib.Combat.UseAbility(ability)
-    local ab
-    if type(ability) == "string" then
-        ab = API.GetABs_name(ability, true)
-    else
-        ab = API.GetABs_id(ability)
-    end
-    
-    if ab and ab.id > 0 and ab.enabled and ab.cooldown_timer == 0 then
-        return API.DoAction_Ability_Direct(ab, 1, API.OFF_ACT_GeneralInterface_route)
+function MELib.Combat.UseAbilityById(id)
+    local ability = API.GetABs_id(id)
+    if ability and ability.id > 0 and ability.enabled and ability.cooldown_timer == 0 then
+        return API.DoAction_Ability_Direct(ability, 1, API.OFF_ACT_GeneralInterface_route)
     end
     return false
 end
 
-function MELib.Combat.IsAbilityReady(ability)
-    local ab
-    if type(ability) == "string" then
-        ab = API.GetABs_name(ability, true)
-    else
-        ab = API.GetABs_id(ability)
-    end
-    
-    if ab and ab.id > 0 then
-        return ab.enabled and ab.cooldown_timer == 0
+function MELib.Combat.IsAbilityReady(name, exact)
+    local ability = API.GetABs_name(name, exact or true)
+    if ability and ability.id > 0 then
+        return ability.enabled and ability.cooldown_timer == 0
     end
     return false
 end
 
-function MELib.Combat.GetAbilityCooldown(ability)
-    local ab
-    if type(ability) == "string" then
-        ab = API.GetABs_name(ability, true)
-    else
-        ab = API.GetABs_id(ability)
-    end
-    
-    if ab and ab.id > 0 then
-        return ab.cooldown_timer
+function MELib.Combat.GetAbilityCooldown(name, exact)
+    local ability = API.GetABs_name(name, exact or true)
+    if ability and ability.id > 0 then
+        return ability.cooldown_timer
     end
     return -1
 end
 
-function MELib.Combat.ToggleQuickPrayers()
-    return API.DoAction_Button_QP()
+function MELib.Combat.GetAbility(name, exact)
+    return API.GetABs_name(name, exact or true)
 end
 
-function MELib.Combat.QuickPrayersOn()
+function MELib.Combat.GetAbilityById(id)
+    return API.GetABs_id(id)
+end
+
+function MELib.Combat.ToggleQuickPrayers()
+    API.DoAction_Button_QP()
+end
+
+function MELib.Combat.QuickPrayersActive()
     return API.GetQuickPray()
 end
 
-function MELib.Combat.SetPrayer(prayerVB, state)
-    return API.QuickPray_option(prayerVB, state and 1 or 0)
-end
-
-function MELib.Combat.IsPrayerOn(prayerVB)
-    return API.VB_GetBit(prayerVB, 0) == 1
-end
-
-function MELib.Combat.Attack(npc, distance)
-    distance = distance or 20
-    if type(npc) == "table" then
-        return API.DoAction_NPC(0x2a, API.OFF_ACT_AttackNPC_route, npc, distance, true, 100)
-    end
-    return API.DoAction_NPC(0x2a, API.OFF_ACT_AttackNPC_route, {npc}, distance, true, 100)
-end
-
-function MELib.Combat.AttackByName(npcName, distance)
-    distance = distance or 20
-    if type(npcName) == "table" then
-        return API.DoAction_NPC_str(0x2a, API.OFF_ACT_AttackNPC_route, npcName, distance, true, 100)
-    end
-    return API.DoAction_NPC_str(0x2a, API.OFF_ACT_AttackNPC_route, {npcName}, distance, true, 100)
+function MELib.Combat.SetAutoRetaliate()
+    return API.DoAction_Button_AR()
 end
 
 MELib.Buffs = {}
@@ -642,37 +576,34 @@ function MELib.Buffs.GetAll()
     return API.Buffbar_GetAllIDs()
 end
 
-function MELib.Buffs.Has(buff)
-    if type(buff) == "table" then
-        local buffs = MELib.Buffs.GetAll()
-        for _, b in ipairs(buffs) do
-            for _, id in ipairs(buff) do
-                if b.id == id then return true end
-            end
-        end
-        return false
+function MELib.Buffs.Has(buffId)
+    local buff = API.Buffbar_GetIDstatus(buffId, false)
+    return buff.id > 0
+end
+
+function MELib.Buffs.Get(buffId)
+    return API.Buffbar_GetIDstatus(buffId, false)
+end
+
+function MELib.Buffs.GetDuration(buffId)
+    local buff = API.Buffbar_GetIDstatus(buffId, false)
+    if buff.id > 0 then
+        return buff.conv_text or 0
     end
-    return API.Buffbar_GetIDstatus(buff).id > 0
-end
-
-function MELib.Buffs.Get(buff)
-    local b = API.Buffbar_GetIDstatus(buff)
-    if b.id > 0 then return b end
-    return nil
-end
-
-function MELib.Buffs.GetDuration(buff)
-    local b = API.Buffbar_GetIDstatus(buff)
-    if b.id > 0 then return b.conv_text or 0 end
     return -1
 end
 
-function MELib.Buffs.GetDebuffs()
+function MELib.Buffs.GetAllDebuffs()
     return API.DeBuffbar_GetAllIDs()
 end
 
-function MELib.Buffs.HasDebuff(debuff)
-    return API.DeBuffbar_GetIDstatus(debuff).id > 0
+function MELib.Buffs.HasDebuff(debuffId)
+    local debuff = API.DeBuffbar_GetIDstatus(debuffId, false)
+    return debuff.id > 0
+end
+
+function MELib.Buffs.GetDebuff(debuffId)
+    return API.DeBuffbar_GetIDstatus(debuffId, false)
 end
 
 MELib.NPC = {}
@@ -685,9 +616,9 @@ function MELib.NPC.Find(npc, distance)
     return nil
 end
 
-function MELib.NPC.FindByName(npcName, distance)
+function MELib.NPC.FindByName(name, distance)
     distance = distance or 50
-    local names = type(npcName) == "table" and npcName or {npcName}
+    local names = type(name) == "table" and name or {name}
     local npcs = API.GetAllObjArrayInteract_str(names, distance, {1})
     if #npcs > 0 then return API.Math_SortAODist(npcs) end
     return nil
@@ -703,32 +634,26 @@ function MELib.NPC.Exists(npc, distance)
     return MELib.NPC.Find(npc, distance) ~= nil
 end
 
-function MELib.NPC.Interact(npc, distance)
-    distance = distance or 20
-    local ids = type(npc) == "table" and npc or {npc}
-    return API.DoAction_NPC(0x29, API.OFF_ACT_InteractNPC_route, ids, distance, true, 0)
+function MELib.NPC.Interact(name, action, distance)
+    return Interact:NPC(name, action, distance or 60)
 end
 
-function MELib.NPC.InteractByName(npcName, distance)
+function MELib.NPC.Attack(npc, distance)
     distance = distance or 20
-    local names = type(npcName) == "table" and npcName or {npcName}
-    return API.DoAction_NPC_str(0x29, API.OFF_ACT_InteractNPC_route, names, distance, true, 0)
+    local ids = type(npc) == "table" and npc or {npc}
+    return API.DoAction_NPC(0x2a, API.OFF_ACT_AttackNPC_route, ids, distance, true, 100)
+end
+
+function MELib.NPC.AttackByName(name, distance)
+    distance = distance or 20
+    local names = type(name) == "table" and name or {name}
+    return API.DoAction_NPC_str(0x2a, API.OFF_ACT_AttackNPC_route, names, distance, true, 100)
 end
 
 function MELib.NPC.TalkTo(npc, distance)
-    return MELib.NPC.Interact(npc, distance)
-end
-
-function MELib.NPC.InteractOption2(npc, distance)
     distance = distance or 20
     local ids = type(npc) == "table" and npc or {npc}
-    return API.DoAction_NPC(0x29, API.OFF_ACT_InteractNPC_route2, ids, distance, true, 0)
-end
-
-function MELib.NPC.InteractOption3(npc, distance)
-    distance = distance or 20
-    local ids = type(npc) == "table" and npc or {npc}
-    return API.DoAction_NPC(0x29, API.OFF_ACT_InteractNPC_route3, ids, distance, true, 0)
+    return API.DoAction_NPC(0x29, API.OFF_ACT_InteractNPC_route, ids, distance, true, 0)
 end
 
 function MELib.NPC.InteractDirect(npcObject, action, route)
@@ -742,16 +667,16 @@ MELib.Objects = {}
 function MELib.Objects.Find(obj, distance)
     distance = distance or 50
     local ids = type(obj) == "table" and obj or {obj}
-    local objects = API.GetAllObjArray1(ids, distance, {0, 12})
-    if #objects > 0 then return API.Math_SortAODist(objects) end
+    local objs = API.GetAllObjArray1(ids, distance, {0, 12})
+    if #objs > 0 then return API.Math_SortAODist(objs) end
     return nil
 end
 
-function MELib.Objects.FindByName(objName, distance)
+function MELib.Objects.FindByName(name, distance)
     distance = distance or 50
-    local names = type(objName) == "table" and objName or {objName}
-    local objects = API.GetAllObjArrayInteract_str(names, distance, {0, 12})
-    if #objects > 0 then return API.Math_SortAODist(objects) end
+    local names = type(name) == "table" and name or {name}
+    local objs = API.GetAllObjArrayInteract_str(names, distance, {0, 12})
+    if #objs > 0 then return API.Math_SortAODist(objs) end
     return nil
 end
 
@@ -765,42 +690,20 @@ function MELib.Objects.Exists(obj, distance)
     return MELib.Objects.Find(obj, distance) ~= nil
 end
 
-function MELib.Objects.Interact(obj, distance)
+function MELib.Objects.Interact(name, action, distance)
+    return Interact:Object(name, action, distance or 60)
+end
+
+function MELib.Objects.InteractById(obj, distance)
     distance = distance or 20
     local ids = type(obj) == "table" and obj or {obj}
     return API.DoAction_Object1(0x29, API.OFF_ACT_GeneralObject_route0, ids, distance)
-end
-
-function MELib.Objects.InteractByName(objName, distance)
-    distance = distance or 20
-    local names = type(objName) == "table" and objName or {objName}
-    return API.DoAction_Object_string1(0x29, API.OFF_ACT_GeneralObject_route0, names, distance)
-end
-
-function MELib.Objects.InteractOption2(obj, distance)
-    distance = distance or 20
-    local ids = type(obj) == "table" and obj or {obj}
-    return API.DoAction_Object1(0x29, API.OFF_ACT_GeneralObject_route1, ids, distance)
-end
-
-function MELib.Objects.InteractOption3(obj, distance)
-    distance = distance or 20
-    local ids = type(obj) == "table" and obj or {obj}
-    return API.DoAction_Object1(0x29, API.OFF_ACT_GeneralObject_route2, ids, distance)
 end
 
 function MELib.Objects.InteractDirect(objObject, action, route)
     action = action or 0x29
     route = route or API.OFF_ACT_GeneralObject_route0
     return API.DoAction_Object_Direct(action, route, objObject)
-end
-
-function MELib.Objects.UseItemOn(item, obj, distance)
-    distance = distance or 20
-    MELib.Inventory.Use(item)
-    API.RandomSleep2(100, 50, 100)
-    local ids = type(obj) == "table" and obj or {obj}
-    return API.DoAction_Object1(0x29, API.GeneralObject_route_useon, ids, distance)
 end
 
 MELib.GroundItems = {}
@@ -864,10 +767,9 @@ function MELib.Interface.Close()
 end
 
 function MELib.Interface.WaitFor(interfaceId, timeout)
-    timeout = timeout or 5000
     return MELib.Utils.WaitUntil(function()
         return MELib.Interface.IsOpen(interfaceId)
-    end, timeout)
+    end, timeout or 5000)
 end
 
 function MELib.Interface.LootWindowOpen()
@@ -910,10 +812,9 @@ function MELib.Movement.IsMoving()
 end
 
 function MELib.Movement.WaitUntilStopped(timeout)
-    timeout = timeout or 10000
     return MELib.Utils.WaitUntil(function()
         return not MELib.Movement.IsMoving()
-    end, timeout)
+    end, timeout or 10000)
 end
 
 function MELib.Movement.Surge()
@@ -938,43 +839,139 @@ end
 MELib.Familiar = {}
 
 function MELib.Familiar.IsSummoned()
-    return API.GetSummoningPoints_() > 0
+    return Familiars:HasFamiliar()
+end
+
+function MELib.Familiar.IsSummonedVB()
+    return Familiars:HasFamiliar2()
+end
+
+function MELib.Familiar.HasBOB()
+    return Familiars:HasFamiliarBOB()
+end
+
+function MELib.Familiar.GetName()
+    return Familiars:GetName()
+end
+
+function MELib.Familiar.GetTimeRemaining()
+    return Familiars:GetTimeRemaining()
+end
+
+function MELib.Familiar.CanRenew()
+    return Familiars:CanRenew()
+end
+
+function MELib.Familiar.GetSpellPoints()
+    return Familiars:GetSpellPoints()
+end
+
+function MELib.Familiar.GetSummoningPoints()
+    return Familiars:GetSummoningPoints()
+end
+
+function MELib.Familiar.GetHealth()
+    return Familiars:GetHealth()
+end
+
+function MELib.Familiar.GetMaxHealth()
+    return Familiars:GetHealthMax()
+end
+
+function MELib.Familiar.CastSpecial()
+    return Familiars:CastSpecialAttack()
+end
+
+function MELib.Familiar.StorageFreeSlots()
+    return Familiars:Storage_FreeAm()
+end
+
+function MELib.Familiar.StorageContains(item)
+    return Familiars:Storage_Contains(item)
+end
+
+function MELib.Familiar.StorageGetItems()
+    return Familiars:Storage_List()
+end
+
+function MELib.Familiar.IsStorageOpen()
+    return Familiars:Storage_InterfaceOpen()
+end
+
+function MELib.Familiar.OpenStorage()
+    return Familiars:SwitchToStorage()
+end
+
+function MELib.Familiar.GiveAll()
+    return Familiars:GiveAllBurden()
+end
+
+function MELib.Familiar.TakeAll()
+    return Familiars:TakeAllBurden()
+end
+
+function MELib.Familiar.TakeItem(item)
+    return Familiars:Storage_InterfaceTake(item)
 end
 
 function MELib.Familiar.Call()
     return API.DoAction_Button_FO(0)
 end
 
-function MELib.Familiar.Special()
-    return API.DoAction_Button_FO(1)
-end
-
-function MELib.Familiar.Attack()
-    return API.DoAction_Button_FO(2)
-end
-
 function MELib.Familiar.Dismiss()
     return API.DoAction_Button_FO(4)
-end
-
-function MELib.Familiar.Interact()
-    return API.DoAction_Button_FO(6)
 end
 
 function MELib.Familiar.Renew()
     return API.DoAction_Button_FO(7)
 end
 
-function MELib.Familiar.GiveBOB()
-    return API.DoAction_Button_FO(8)
+MELib.GrandExchange = {}
+
+function MELib.GrandExchange.IsOpen()
+    return GrandExchange:IsOpen()
 end
 
-function MELib.Familiar.TakeBOB()
-    return API.DoAction_Button_FO(9)
+function MELib.GrandExchange.Close()
+    return GrandExchange:Close()
 end
 
-function MELib.Familiar.RestorePoints()
-    return API.DoAction_Button_FO(10)
+function MELib.GrandExchange.GetSlotData(slot)
+    return GrandExchange:GetSlotData(slot)
+end
+
+function MELib.GrandExchange.GetAllSlots()
+    return GrandExchange:GetAllSlotData()
+end
+
+function MELib.GrandExchange.Buy(itemId, quantity, price)
+    if not MELib.GrandExchange.IsOpen() then return false end
+    GrandExchange:OpenNextAvailableSlot()
+    API.RandomSleep2(300, 100, 200)
+    GrandExchange:SelectItem(itemId)
+    API.RandomSleep2(300, 100, 200)
+    if quantity then GrandExchange:SetQuantity(quantity) end
+    if price then GrandExchange:SetPrice(price) end
+    API.RandomSleep2(200, 50, 100)
+    return GrandExchange:ConfirmOrder()
+end
+
+function MELib.GrandExchange.FindOrder(itemId)
+    return GrandExchange:FindOrder(itemId)
+end
+
+function MELib.GrandExchange.CancelOrder(slot)
+    return GrandExchange:CancelOrder(slot)
+end
+
+MELib.Item = {}
+
+function MELib.Item.Get(item, tradeable)
+    return Item:Get(item, tradeable)
+end
+
+function MELib.Item.GetAll(name, partialMatch)
+    return Item:GetAll(name, partialMatch or false)
 end
 
 MELib.Varbit = {}
